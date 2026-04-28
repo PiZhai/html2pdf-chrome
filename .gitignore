@@ -1,0 +1,28 @@
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+dist/
+build/
+coverage.out
+coverage.html
+
+# Generated PDFs and local render outputs
+*.pdf
+output/
+
+# Temporary files
+tmp/
+temp/
