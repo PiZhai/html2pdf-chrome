@@ -1,4 +1,4 @@
-module html2pdf-chrome
+module github.com/PiZhai/html2pdf-chrome
 
 go 1.26
 

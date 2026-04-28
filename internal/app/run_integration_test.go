@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"html2pdf-chrome/internal/browser"
-	"html2pdf-chrome/internal/config"
+	"github.com/PiZhai/html2pdf-chrome/internal/browser"
+	"github.com/PiZhai/html2pdf-chrome/internal/config"
 )
 
 func TestRunGeneratesPDF(t *testing.T) {

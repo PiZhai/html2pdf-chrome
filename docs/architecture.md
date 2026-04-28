@@ -10,6 +10,8 @@
 
 ```text
 CLI flags
+  -> pkg/html2pdf.Request
+  -> pkg/html2pdf.Convert
   -> config.Config
   -> Validate / InputTarget / PrepareOutputPath
   -> browser.FindChrome
@@ -29,14 +31,25 @@ CLI 入口。
 负责：
 
 - 解析命令行参数
-- 组装 `config.Config`
-- 调用 `app.Run`
+- 组装 `pkg/html2pdf.Request`
+- 调用公开库
 
 不负责：
 
 - 浏览器启动
 - CDP 控制
 - PDF 导出
+
+### `pkg/html2pdf`
+
+公开 API 层。
+
+负责：
+
+- 提供给其他 Go 项目依赖的稳定入口
+- 定义公开的 `Request / Options`
+- 把公开请求转换为内部 `config.Config`
+- 调用内部编排层
 
 ### `internal/config`
 
@@ -99,6 +112,7 @@ CLI 入口。
 - 默认静默运行，必要时可开启 `-chrome-debug-log`
 - `-paper` 与 `-prefer-css-page-size` 已拆分，避免 CLI 纸张设置被静默覆盖
 - `Page.printToPDF` 常用参数已从 CLI 直连到底层渲染调用
+- CLI 和 Go 库共用同一条内部渲染链路，避免能力分叉
 - 页面等待策略目前包含：
   - `body` ready
   - `document.readyState === "complete"`

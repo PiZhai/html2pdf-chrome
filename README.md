@@ -19,6 +19,7 @@
 已完成：
 
 - CLI 入口
+- Go 库入口（`pkg/html2pdf`）
 - 配置校验与输入规范化
 - Chrome 查找与启动
 - CDP 连接
@@ -53,6 +54,12 @@ go build ./...
 go test ./...
 ```
 
+作为 Go 库依赖：
+
+```bash
+go get github.com/PiZhai/html2pdf-chrome
+```
+
 把本地 HTML 转成 PDF：
 
 ```bash
@@ -63,6 +70,34 @@ go run ./cmd/html2pdf-chrome -html-file ./testdata/sample.html -out ./output.pdf
 
 ```bash
 go run ./cmd/html2pdf-chrome -url https://example.com -out ./output.pdf
+```
+
+在 Go 代码里调用：
+
+```go
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/PiZhai/html2pdf-chrome/pkg/html2pdf"
+)
+
+func main() {
+	err := html2pdf.Convert(html2pdf.Request{
+		URL:        "https://example.com",
+		OutputPath: "./output.pdf",
+		Options: html2pdf.Options{
+			Timeout:         45 * time.Second,
+			Paper:           html2pdf.PaperA4,
+			PrintBackground: true,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 ```
 
 如果需要查看 Chrome 启动日志：
@@ -97,6 +132,7 @@ go run ./cmd/html2pdf-chrome -html-file ./testdata/sample.html -chrome-debug-log
 
 ```text
 cmd/html2pdf-chrome/   CLI 入口
+pkg/html2pdf/         对外公开的 Go API
 internal/app/          主流程编排
 internal/config/       配置、校验、路径规范化
 internal/browser/      Chrome 查找、启动、关闭

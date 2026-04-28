@@ -8,28 +8,25 @@ import (
 	"strings"
 	"time"
 
-	"html2pdf-chrome/internal/app"
-	"html2pdf-chrome/internal/config"
+	"github.com/PiZhai/html2pdf-chrome/pkg/html2pdf"
 )
 
 func main() {
 	log.SetFlags(0)
 
-	cfg, err := parseFlags()
+	req, err := parseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := app.Run(cfg); err != nil {
+	if err := html2pdf.Convert(req); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func parseFlags() (*config.Config, error) {
-	cfg := &config.Config{}
+func parseFlags() (html2pdf.Request, error) {
+	req := html2pdf.Request{}
 	var paper string
-	var preferCSSPageSize bool
-	var chromeDebugLog bool
 	var landscape bool
 	var displayHeaderFooter bool
 	var printBackground bool
@@ -45,19 +42,19 @@ func parseFlags() (*config.Config, error) {
 	var generateDocumentOutline bool
 	var transferMode string
 
-	flag.BoolVar(&chromeDebugLog, "chrome-debug-log", false, "Emit Chrome process logs to stderr for debugging")
 	flag.BoolVar(&landscape, "landscape", false, "Render PDF in landscape orientation")
 	flag.BoolVar(&displayHeaderFooter, "display-header-footer", false, "Display header and footer")
 	flag.BoolVar(&printBackground, "print-background", false, "Print CSS backgrounds")
-	flag.BoolVar(&preferCSSPageSize, "prefer-css-page-size", false, "Prefer CSS @page size over configured paper size")
+	flag.BoolVar(&req.Options.PreferCSSPageSize, "prefer-css-page-size", false, "Prefer CSS @page size over configured paper size")
 	flag.BoolVar(&generateTaggedPDF, "generate-tagged-pdf", false, "Generate tagged (accessible) PDF")
 	flag.BoolVar(&generateDocumentOutline, "generate-document-outline", false, "Embed document outline into the PDF")
-	flag.StringVar(&cfg.URL, "url", "", "HTTP/HTTPS URL to render")
-	flag.StringVar(&cfg.HTMLFile, "html-file", "", "Local HTML file to render")
-	flag.StringVar(&cfg.OutputFile, "out", "output.pdf", "Output PDF file path")
-	flag.StringVar(&cfg.ChromePath, "chrome-path", "", "Chrome/Chromium executable path")
-	flag.DurationVar(&cfg.Timeout, "timeout", 45*time.Second, "Overall render timeout")
-	flag.StringVar(&cfg.WaitSelector, "wait-selector", "", "Optional CSS selector to wait for before printing")
+	flag.BoolVar(&req.Options.ChromeDebugLog, "chrome-debug-log", false, "Emit Chrome process logs to stderr for debugging")
+	flag.StringVar(&req.URL, "url", "", "HTTP/HTTPS URL to render")
+	flag.StringVar(&req.HTMLFile, "html-file", "", "Local HTML file to render")
+	flag.StringVar(&req.OutputPath, "out", "output.pdf", "Output PDF file path")
+	flag.StringVar(&req.Options.ChromePath, "chrome-path", "", "Chrome/Chromium executable path")
+	flag.DurationVar(&req.Options.Timeout, "timeout", 45*time.Second, "Overall render timeout")
+	flag.StringVar(&req.Options.WaitSelector, "wait-selector", "", "Optional CSS selector to wait for before printing")
 	flag.StringVar(&paper, "paper", "a4", "Paper preset: letter, legal, tabloid, a3, a4, a5")
 	flag.StringVar(&headerTemplate, "header-template", "", "HTML template for the PDF header")
 	flag.StringVar(&footerTemplate, "footer-template", "", "HTML template for the PDF footer")
@@ -79,42 +76,31 @@ func parseFlags() (*config.Config, error) {
 
 	flag.Parse()
 
-	cfg.Landscape = boolPtr(landscape)
-	cfg.DisplayHeaderFooter = boolPtr(displayHeaderFooter)
-	cfg.PrintBackground = boolPtr(printBackground)
-	cfg.ChromeDebugLog = &chromeDebugLog
-	cfg.PreferCSSPageSize = &preferCSSPageSize
-	cfg.Scale = float64Ptr(scale)
-	cfg.MarginTop = float64Ptr(marginTop)
-	cfg.MarginBottom = float64Ptr(marginBottom)
-	cfg.MarginLeft = float64Ptr(marginLeft)
-	cfg.MarginRight = float64Ptr(marginRight)
-	cfg.PageRanges = stringPtr(pageRanges)
-	cfg.HeaderTemplate = stringPtr(headerTemplate)
-	cfg.FooterTemplate = stringPtr(footerTemplate)
-	cfg.GenerateTaggedPDF = boolPtr(generateTaggedPDF)
-	cfg.GenerateDocumentOutline = boolPtr(generateDocumentOutline)
+	req.Options.Paper = html2pdf.PaperPreset(strings.ToLower(strings.TrimSpace(paper)))
+	req.Options.Landscape = landscape
+	req.Options.DisplayHeaderFooter = displayHeaderFooter
+	req.Options.PrintBackground = printBackground
+	req.Options.Scale = html2pdf.Float64(scale)
+	req.Options.MarginTop = html2pdf.Float64(marginTop)
+	req.Options.MarginBottom = html2pdf.Float64(marginBottom)
+	req.Options.MarginLeft = html2pdf.Float64(marginLeft)
+	req.Options.MarginRight = html2pdf.Float64(marginRight)
+	req.Options.PageRanges = pageRanges
+	req.Options.HeaderTemplate = headerTemplate
+	req.Options.FooterTemplate = footerTemplate
+	req.Options.GenerateTaggedPDF = generateTaggedPDF
+	req.Options.GenerateDocumentOutline = generateDocumentOutline
 
 	switch strings.ToLower(strings.TrimSpace(transferMode)) {
 	case "":
-		cfg.TransferMode = nil
+		req.Options.TransferMode = ""
 	case "base64":
-		cfg.TransferMode = stringPtr("ReturnAsBase64")
+		req.Options.TransferMode = html2pdf.TransferModeBase64
 	case "stream":
-		cfg.TransferMode = stringPtr("ReturnAsStream")
+		req.Options.TransferMode = html2pdf.TransferModeStream
 	default:
-		return nil, fmt.Errorf("unsupported transfer-mode %q; use base64 or stream", transferMode)
+		return html2pdf.Request{}, fmt.Errorf("unsupported transfer-mode %q; use base64 or stream", transferMode)
 	}
 
-	if err := cfg.ParsePaperPreset(paper); err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	return req, nil
 }
-
-func boolPtr(v bool) *bool { return &v }
-
-func float64Ptr(v float64) *float64 { return &v }
-
-func stringPtr(v string) *string { return &v }

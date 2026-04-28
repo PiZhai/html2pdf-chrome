@@ -2,10 +2,10 @@ package app
 
 import (
 	"context"
-	"html2pdf-chrome/internal/browser"
-	"html2pdf-chrome/internal/cdp"
-	"html2pdf-chrome/internal/config"
-	"html2pdf-chrome/internal/render"
+	"github.com/PiZhai/html2pdf-chrome/internal/browser"
+	"github.com/PiZhai/html2pdf-chrome/internal/cdp"
+	"github.com/PiZhai/html2pdf-chrome/internal/config"
+	"github.com/PiZhai/html2pdf-chrome/internal/render"
 )
 
 func Run(cfg *config.Config) error {
