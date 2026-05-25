@@ -16,6 +16,7 @@ type Config struct {
 	OutputFile     string        `json:"outputFile,omitempty"`
 	ChromePath     string        `json:"chromePath,omitempty"`
 	ChromeDebugLog *bool         `json:"chromeDebugLog,omitempty"`
+	NoSandbox      *bool         `json:"noSandbox,omitempty"`
 	Timeout        time.Duration `json:"timeout,omitempty"`
 	WaitSelector   string        `json:"waitSelector,omitempty"`
 

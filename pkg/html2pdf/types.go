@@ -64,6 +64,7 @@ type Options struct {
 	GenerateDocumentOutline bool
 	TransferMode            TransferMode
 	ChromeDebugLog          bool
+	NoSandbox               bool
 }
 
 func (r Request) Validate() error {

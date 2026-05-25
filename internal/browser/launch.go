@@ -15,7 +15,8 @@ import (
 )
 
 type LaunchOptions struct {
-	DebugLog bool
+	DebugLog  bool
+	NoSandbox bool
 }
 
 func Launch(execPath string, options LaunchOptions) (*Instance, error) {
@@ -45,6 +46,10 @@ func Launch(execPath string, options LaunchOptions) (*Instance, error) {
 		"--hide-scrollbars",
 		"--remote-debugging-port=" + strconv.Itoa(debugPort),
 		"--user-data-dir=" + userDataDir,
+	}
+
+	if options.NoSandbox {
+		args = append(args, "--no-sandbox")
 	}
 
 	cmd := exec.Command(execPath, args...)

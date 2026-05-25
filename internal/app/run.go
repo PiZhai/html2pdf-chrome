@@ -30,7 +30,8 @@ func Run(cfg *config.Config) error {
 	}
 
 	instance, err := browser.Launch(chromePath, browser.LaunchOptions{
-		DebugLog: cfg.ChromeDebugLog != nil && *cfg.ChromeDebugLog,
+		DebugLog:  cfg.ChromeDebugLog != nil && *cfg.ChromeDebugLog,
+		NoSandbox: cfg.NoSandbox != nil && *cfg.NoSandbox,
 	})
 	if err != nil {
 		return err

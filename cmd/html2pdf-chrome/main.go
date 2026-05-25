@@ -52,6 +52,7 @@ func parseFlags() (html2pdf.Request, error) {
 	flag.BoolVar(&generateTaggedPDF, "generate-tagged-pdf", false, "Generate tagged (accessible) PDF")
 	flag.BoolVar(&generateDocumentOutline, "generate-document-outline", false, "Embed document outline into the PDF")
 	flag.BoolVar(&req.Options.ChromeDebugLog, "chrome-debug-log", false, "Emit Chrome process logs to stderr for debugging")
+	flag.BoolVar(&req.Options.NoSandbox, "no-sandbox", false, "Disable Chrome sandbox (required when running as root in containers)")
 	flag.BoolVar(&waitNetworkIdle, "wait-network-idle", false, "Wait for network idle before printing")
 	flag.DurationVar(&networkIdleTime, "network-idle-time", 500*time.Millisecond, "Network idle quiet period duration")
 	flag.StringVar(&waitExpression, "wait-expression", "", "Custom JS expression to poll until truthy before printing")

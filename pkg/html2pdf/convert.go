@@ -29,6 +29,7 @@ func (r Request) toConfig() (*config.Config, error) {
 		NetworkIdleTime:         r.Options.NetworkIdleTime,
 		WaitExpression:          strings.TrimSpace(r.Options.WaitExpression),
 		ChromeDebugLog:          boolPtr(r.Options.ChromeDebugLog),
+		NoSandbox:               boolPtr(r.Options.NoSandbox),
 		Landscape:               boolPtr(r.Options.Landscape),
 		DisplayHeaderFooter:     boolPtr(r.Options.DisplayHeaderFooter),
 		PrintBackground:         boolPtr(r.Options.PrintBackground),

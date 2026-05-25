@@ -35,6 +35,9 @@ type Config struct {
 
 	// DebugLog enables Chrome process debug logging.
 	DebugLog bool
+
+	// NoSandbox disables Chrome's sandbox. Required when running as root in containers.
+	NoSandbox bool
 }
 
 func (c *Config) withDefaults() Config {
@@ -264,7 +267,8 @@ func (p *Pool) createInstance() (*PooledInstance, error) {
 	// Release lock during the potentially slow launch.
 	p.mu.Unlock()
 	inst, err := browser.Launch(p.chromePath, browser.LaunchOptions{
-		DebugLog: p.config.DebugLog,
+		DebugLog:  p.config.DebugLog,
+		NoSandbox: p.config.NoSandbox,
 	})
 	p.mu.Lock()
 
@@ -283,7 +287,8 @@ func (p *Pool) createInstance() (*PooledInstance, error) {
 // Used during pool initialization when the lock is not held.
 func (p *Pool) launchInstance() (*PooledInstance, error) {
 	inst, err := browser.Launch(p.chromePath, browser.LaunchOptions{
-		DebugLog: p.config.DebugLog,
+		DebugLog:  p.config.DebugLog,
+		NoSandbox: p.config.NoSandbox,
 	})
 	if err != nil {
 		return nil, err

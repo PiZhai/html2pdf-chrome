@@ -35,6 +35,10 @@ type ConverterConfig struct {
 
 	// ChromeDebugLog enables Chrome process debug logging to stderr.
 	ChromeDebugLog bool
+
+	// NoSandbox disables Chrome's sandbox. Required when running as root
+	// in Docker containers. Not recommended outside of containers.
+	NoSandbox bool
 }
 
 // Converter is a reusable HTML-to-PDF converter backed by a Chrome instance
@@ -56,6 +60,7 @@ func NewConverter(cfg ConverterConfig) (*Converter, error) {
 		MaxTasksPerInstance: cfg.MaxTasksPerInstance,
 		IdleTimeout:         cfg.IdleTimeout,
 		DebugLog:            cfg.ChromeDebugLog,
+		NoSandbox:           cfg.NoSandbox,
 	})
 	if err != nil {
 		return nil, err
