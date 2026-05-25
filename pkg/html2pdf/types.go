@@ -35,6 +35,19 @@ type Options struct {
 	WaitSelector string
 	Paper        PaperPreset
 
+	// WaitNetworkIdle enables waiting for network idle before exporting PDF.
+	// Useful for pages with async resource loading.
+	WaitNetworkIdle bool
+
+	// NetworkIdleTime is the quiet period required to consider the network idle.
+	// Only effective when WaitNetworkIdle is true. Default: 500ms.
+	NetworkIdleTime time.Duration
+
+	// WaitExpression is a custom JS expression that is polled until it returns
+	// a truthy value. Use for application-specific readiness signals.
+	// Example: "window.__RENDER_DONE === true"
+	WaitExpression string
+
 	Landscape               bool
 	DisplayHeaderFooter     bool
 	PrintBackground         bool

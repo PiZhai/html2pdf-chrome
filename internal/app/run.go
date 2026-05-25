@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/PiZhai/html2pdf-chrome/internal/browser"
 	"github.com/PiZhai/html2pdf-chrome/internal/cdp"
 	"github.com/PiZhai/html2pdf-chrome/internal/config"
@@ -45,7 +46,18 @@ func Run(cfg *config.Config) error {
 	renderCtx, renderCancel := context.WithTimeout(cdpCtx, cfg.Timeout)
 	defer renderCancel()
 
-	if err := cdp.OpenPage(renderCtx, target, cfg.WaitSelector); err != nil {
+	pageOpts := cdp.PageOptions{
+		TargetURL:      target,
+		WaitSelector:   cfg.WaitSelector,
+		WaitExpression: cfg.WaitExpression,
+		Timeout:        cfg.Timeout,
+	}
+	if cfg.WaitNetworkIdle != nil && *cfg.WaitNetworkIdle {
+		pageOpts.WaitNetworkIdle = true
+		pageOpts.NetworkIdleTime = cfg.NetworkIdleTime
+	}
+
+	if err := cdp.OpenPage(renderCtx, pageOpts); err != nil {
 		return err
 	}
 

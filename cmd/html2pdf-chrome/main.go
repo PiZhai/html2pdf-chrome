@@ -41,6 +41,9 @@ func parseFlags() (html2pdf.Request, error) {
 	var generateTaggedPDF bool
 	var generateDocumentOutline bool
 	var transferMode string
+	var waitNetworkIdle bool
+	var networkIdleTime time.Duration
+	var waitExpression string
 
 	flag.BoolVar(&landscape, "landscape", false, "Render PDF in landscape orientation")
 	flag.BoolVar(&displayHeaderFooter, "display-header-footer", false, "Display header and footer")
@@ -49,6 +52,9 @@ func parseFlags() (html2pdf.Request, error) {
 	flag.BoolVar(&generateTaggedPDF, "generate-tagged-pdf", false, "Generate tagged (accessible) PDF")
 	flag.BoolVar(&generateDocumentOutline, "generate-document-outline", false, "Embed document outline into the PDF")
 	flag.BoolVar(&req.Options.ChromeDebugLog, "chrome-debug-log", false, "Emit Chrome process logs to stderr for debugging")
+	flag.BoolVar(&waitNetworkIdle, "wait-network-idle", false, "Wait for network idle before printing")
+	flag.DurationVar(&networkIdleTime, "network-idle-time", 500*time.Millisecond, "Network idle quiet period duration")
+	flag.StringVar(&waitExpression, "wait-expression", "", "Custom JS expression to poll until truthy before printing")
 	flag.StringVar(&req.URL, "url", "", "HTTP/HTTPS URL to render")
 	flag.StringVar(&req.HTMLFile, "html-file", "", "Local HTML file to render")
 	flag.StringVar(&req.OutputPath, "out", "output.pdf", "Output PDF file path")
@@ -101,6 +107,10 @@ func parseFlags() (html2pdf.Request, error) {
 	default:
 		return html2pdf.Request{}, fmt.Errorf("unsupported transfer-mode %q; use base64 or stream", transferMode)
 	}
+
+	req.Options.WaitNetworkIdle = waitNetworkIdle
+	req.Options.NetworkIdleTime = networkIdleTime
+	req.Options.WaitExpression = waitExpression
 
 	return req, nil
 }

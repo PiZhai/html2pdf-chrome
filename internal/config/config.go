@@ -19,6 +19,22 @@ type Config struct {
 	Timeout        time.Duration `json:"timeout,omitempty"`
 	WaitSelector   string        `json:"waitSelector,omitempty"`
 
+	// WaitNetworkIdle 是否等待网络空闲后再导出 PDF。
+	// 适用于有异步资源加载的页面。
+	// 默认值: nil（不等待）
+	WaitNetworkIdle *bool `json:"waitNetworkIdle,omitempty"`
+
+	// NetworkIdleTime 网络空闲的静默期。
+	// 仅在 WaitNetworkIdle=true 时生效。
+	// 默认值: 500ms
+	NetworkIdleTime time.Duration `json:"networkIdleTime,omitempty"`
+
+	// WaitExpression 自定义 JS 等待表达式。
+	// 轮询执行直到返回 truthy 值后再导出 PDF。
+	// 示例: "window.__RENDER_DONE === true"
+	// 默认值: ""（不使用）
+	WaitExpression string `json:"waitExpression,omitempty"`
+
 	// Landscape 设置横向（横版）打印。
 	// 默认值: false（纵向打印）
 	Landscape *bool `json:"landscape,omitempty"`
@@ -238,6 +254,13 @@ func (c *Config) Validate() error {
 	}
 	if c.MarginRight != nil && *c.MarginRight < 0 {
 		return fmt.Errorf("marginRight must be greater than or equal to 0")
+	}
+
+	if c.NetworkIdleTime < 0 {
+		return fmt.Errorf("networkIdleTime must be greater than or equal to 0")
+	}
+	if c.NetworkIdleTime > 30*time.Second {
+		return fmt.Errorf("networkIdleTime must not exceed 30s")
 	}
 
 	hasHeader := c.HeaderTemplate != nil && strings.TrimSpace(*c.HeaderTemplate) != ""
