@@ -161,7 +161,7 @@ internal/cdp/          CDP 连接、导航、等待策略
 internal/pool/         Chrome 实例池
 internal/render/       PDF 导出
 testdata/              测试用 HTML
-docs/                  架构说明
+docs/                  文档（架构、使用教程、Docker 部署、开发者指南）
 ```
 
 ## 已知限制
@@ -170,3 +170,7 @@ docs/                  架构说明
 - 复杂页面稳定性依赖等待策略的正确选择
 - 错误信息目前是扁平的 wrap，没有结构化分类
 - 没有发布工程（多平台构建、版本注入）
+
+## 贡献 / 开发
+
+详见 [开发者指南](./docs/developer-guide.md)。
