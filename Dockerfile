@@ -60,14 +60,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 刷新字体缓存
 RUN fc-cache -fv
 
-# 创建非 root 用户
-RUN useradd -m -s /bin/bash chrome \
-    && mkdir -p /app/output \
-    && chown -R chrome:chrome /app
+# 创建工作目录
+RUN mkdir -p /app/output
 
 COPY --from=builder /html2pdf-chrome /usr/local/bin/html2pdf-chrome
 
-USER chrome
+# 容器环境下 sandbox 无意义（容器本身是隔离层），默认禁用
 WORKDIR /app
 
-ENTRYPOINT ["html2pdf-chrome"]
+ENTRYPOINT ["html2pdf-chrome", "-no-sandbox"]
