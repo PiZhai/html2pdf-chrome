@@ -58,6 +58,11 @@ Converter.Close()
 
 CLI 入口。解析 flag，组装 Request，调用 `Convert`。
 
+### `cmd/html2pdf-server`
+
+HTTP 服务入口。启动实例池，暴露 `POST /convert` 和 `GET /health` 接口。
+适合 Docker 长期运行部署。
+
 ### `pkg/html2pdf`
 
 公开 API 层。
@@ -154,6 +159,6 @@ Navigate
 
 ## 待做
 
-1. Linux / Windows 实机验证
+1. Windows 实机验证
 2. 错误分类与可观测性（启动失败 vs 渲染超时 vs 写入失败）
 3. 发布工程（多平台构建、版本注入、校验和）

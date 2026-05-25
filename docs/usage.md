@@ -438,7 +438,7 @@ type Options struct {
 | 静态页面 | 不需要额外等待，默认即可 |
 | 有图片/CSS/字体异步加载 | `-wait-network-idle` |
 | SPA 应用（React/Vue 等） | `-wait-expression "window.__READY"` 或 `-wait-selector "#app"` |
-| 图表库（ECharts/Chart.js） | `-wait-network-idle` + `-wait-expression "window.bindbindbindchartsReady"` |
+| 图表库（ECharts/Chart.js） | `-wait-network-idle` + `-wait-expression "window.chartsReady"` |
 | MathJax 数学公式 | `-wait-network-idle`（MathJax 会加载字体文件） |
 | 有长轮询/SSE 的页面 | 不要用 network idle，改用 `-wait-expression` |
 | 需要等待特定 DOM 元素 | `-wait-selector ".my-element"` |

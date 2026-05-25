@@ -4,103 +4,78 @@
 
 ## Dockerfile
 
-```dockerfile
-# ---- 构建阶段 ----
-FROM golang:1.26-bookworm AS builder
+推荐使用项目根目录的 `Dockerfile.cn`（国内镜像加速版）或 `Dockerfile`（国际版）。
 
-WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /html2pdf-chrome ./cmd/html2pdf-chrome
+以下是 `Dockerfile.cn` 的核心结构说明（完整内容见项目根目录文件）：
 
-# ---- 运行阶段 ----
-FROM debian:bookworm-slim
+- 构建阶段：编译 `html2pdf-chrome`（CLI）和 `html2pdf-server`（HTTP 服务）两个二进制
+- 运行阶段：基于 `debian:bookworm-slim`，安装 Chromium + 字体 + 系统库
+- 默认以 root 运行，ENTRYPOINT 自带 `-no-sandbox`（避免挂载卷权限问题和 sandbox 报错）
+- 默认启动 HTTP 服务模式（`html2pdf-server`）
 
-# 1. 基础工具
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget gnupg ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+如果只需要 CLI 模式，可以覆盖 ENTRYPOINT：
 
-# 2. 安装 Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
-      | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] \
-       http://dl.google.com/linux/chrome/deb/ stable main" \
-       > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# 3. 字体：中日韩 + 数学符号 + 西文
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    fonts-noto-cjk \
-    fonts-noto-cjk-extra \
-    fonts-noto-color-emoji \
-    fonts-liberation \
-    fonts-dejavu-core \
-    fonts-stix \
-    fonts-lmodern \
-    && rm -rf /var/lib/apt/lists/*
-
-# 4. Chrome 运行所需的系统库（headless 模式仍需要这些）
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libxshmfence1 \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-# 5. 刷新字体缓存
-RUN fc-cache -fv
-
-# 6. 创建非 root 用户（避免使用 --no-sandbox）
-RUN useradd -m -s /bin/bash chrome \
-    && mkdir -p /app/output \
-    && chown -R chrome:chrome /app
-
-COPY --from=builder /html2pdf-chrome /usr/local/bin/html2pdf-chrome
-
-USER chrome
-WORKDIR /app
-
-ENTRYPOINT ["html2pdf-chrome"]
+```bash
+docker run --rm --shm-size=512m \
+  --entrypoint html2pdf-chrome \
+  -v $(pwd)/output:/app/output \
+  html2pdf-chrome \
+  -no-sandbox \
+  -url https://example.com \
+  -out /app/output/example.pdf
 ```
 
 ## 构建镜像
 
 ```bash
-docker build -t html2pdf-chrome:latest .
+# 国内环境（使用阿里云镜像 + Chromium）
+docker build -f Dockerfile.cn -t html2pdf-chrome .
+
+# 国际环境（使用 Google Chrome）
+docker build -t html2pdf-chrome .
 ```
 
 ## 运行
 
-### 基本用法
+### HTTP 服务模式（推荐，长期运行）
+
+```bash
+docker run -d \
+  --name html2pdf \
+  --restart always \
+  --shm-size=512m \
+  -p 8080:8080 \
+  html2pdf-chrome
+
+# 调用
+curl -X POST http://localhost:8080/convert \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "printBackground": true}' \
+  -o output.pdf
+
+# 健康检查
+curl http://localhost:8080/health
+```
+
+### CLI 模式（一次性转换）
 
 ```bash
 # 转换在线页面
-docker run --rm -v $(pwd)/output:/app/output html2pdf-chrome:latest \
+docker run --rm --shm-size=512m \
+  --entrypoint html2pdf-chrome \
+  -v $(pwd)/output:/app/output \
+  html2pdf-chrome \
+  -no-sandbox \
   -url https://example.com \
   -out /app/output/example.pdf
 
 # 转换本地 HTML 文件
-docker run --rm \
+docker run --rm --shm-size=512m \
+  --entrypoint html2pdf-chrome \
   -v $(pwd)/output:/app/output \
   -v $(pwd)/input:/app/input:ro \
-  html2pdf-chrome:latest \
+  html2pdf-chrome \
+  -no-sandbox \
   -html-file /app/input/report.html \
   -out /app/output/report.pdf
 ```
@@ -109,28 +84,30 @@ docker run --rm \
 
 ```bash
 # 等待网络空闲（适合有异步加载的页面）
-docker run --rm -v $(pwd)/output:/app/output html2pdf-chrome:latest \
+docker run --rm --shm-size=512m \
+  --entrypoint html2pdf-chrome \
+  -v $(pwd)/output:/app/output \
+  html2pdf-chrome \
+  -no-sandbox \
   -url https://example.com \
   -wait-network-idle \
   -out /app/output/example.pdf
-
-# 等待自定义条件（适合 SPA 或动态渲染页面）
-docker run --rm -v $(pwd)/output:/app/output html2pdf-chrome:latest \
-  -url https://example.com \
-  -wait-expression "window.__RENDER_DONE === true" \
-  -out /app/output/example.pdf
 ```
 
-### 以 root 运行（不推荐，但某些环境需要）
-
-如果你的环境必须以 root 运行容器，需要加 `--no-sandbox`：
+HTTP 服务模式下通过 JSON 参数指定：
 
 ```bash
-docker run --rm -u root -v $(pwd)/output:/app/output html2pdf-chrome:latest \
-  -url https://example.com \
-  -no-sandbox \
-  -out /app/output/example.pdf
+curl -X POST http://localhost:8080/convert \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "waitNetworkIdle": true}' \
+  -o output.pdf
 ```
+
+### 关于 --no-sandbox
+
+当前 Dockerfile 默认以 root 运行并在 ENTRYPOINT 中带上 `-no-sandbox`，因此不需要额外处理。
+如果你自定义了 Dockerfile 并使用非 root 用户，在某些内核配置下仍可能需要 `-no-sandbox`
+（取决于 unprivileged user namespaces 是否可用）。
 
 ## 字体说明
 
@@ -174,72 +151,40 @@ COPY ./fonts/ /usr/share/fonts/custom/
 RUN fc-cache -fv
 ```
 
-## 作为 HTTP 服务部署
+## 作为 HTTP 服务部署（推荐）
 
-实际生产中通常不会每次 `docker run` 一个容器，而是在容器内运行一个 HTTP 服务，调用 Go 库的池化模式。
+`Dockerfile.cn` 默认启动 `html2pdf-server`，无需额外代码。直接运行：
 
-示例服务代码：
-
-```go
-package main
-
-import (
-    "encoding/json"
-    "log"
-    "net/http"
-    "os"
-    "path/filepath"
-    "time"
-
-    "github.com/PiZhai/html2pdf-chrome/pkg/html2pdf"
-)
-
-func main() {
-    converter, err := html2pdf.NewConverter(html2pdf.ConverterConfig{
-        MaxInstances: 4,
-        MinInstances: 2,
-        NoSandbox:    os.Getenv("NO_SANDBOX") == "true",
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer converter.Close()
-
-    http.HandleFunc("/convert", func(w http.ResponseWriter, r *http.Request) {
-        var req struct {
-            URL string `json:"url"`
-        }
-        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
-            return
-        }
-
-        tmpFile := filepath.Join(os.TempDir(), "pdf-"+time.Now().Format("20060102150405")+".pdf")
-        defer os.Remove(tmpFile)
-
-        err := converter.Convert(html2pdf.Request{
-            URL:        req.URL,
-            OutputPath: tmpFile,
-            Options: html2pdf.Options{
-                Timeout:         30 * time.Second,
-                WaitNetworkIdle: true,
-                PrintBackground: true,
-                NoSandbox:       os.Getenv("NO_SANDBOX") == "true",
-            },
-        })
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
-
-        w.Header().Set("Content-Type", "application/pdf")
-        http.ServeFile(w, r, tmpFile)
-    })
-
-    log.Println("listening on :8080")
-    log.Fatal(http.ListenAndServe(":8080", nil))
-}
+```bash
+docker run -d \
+  --name html2pdf \
+  --restart always \
+  --shm-size=512m \
+  -p 8080:8080 \
+  html2pdf-chrome
 ```
+
+调整实例池大小：
+
+```bash
+docker run -d \
+  --name html2pdf \
+  --restart always \
+  --shm-size=1g \
+  -p 8080:8080 \
+  html2pdf-chrome \
+  -max-instances 8 \
+  -min-instances 4
+```
+
+服务参数：
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `-addr` | `:8080` | 监听地址 |
+| `-max-instances` | `4` | 最大 Chrome 实例数 |
+| `-min-instances` | `2` | 最小空闲实例数 |
+| `-no-sandbox` | ENTRYPOINT 已带 | 禁用 sandbox |
 
 对应的 docker-compose.yml：
 
@@ -247,20 +192,18 @@ func main() {
 version: "3.8"
 services:
   html2pdf:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.cn
     ports:
       - "8080:8080"
-    environment:
-      - NO_SANDBOX=false
+    shm_size: "512m"
+    restart: always
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: "2"
-    # 如果必须以 root 运行，取消下面的注释并设置 NO_SANDBOX=true
-    # user: root
-    # environment:
-    #   - NO_SANDBOX=true
 ```
 
 ## 资源限制建议
@@ -283,9 +226,9 @@ docker run --shm-size=512m ...
 
 ## 常见问题
 
-### Chrome 启动失败：`Running as root without --no-sandbox is not supported`
+### Chrome 启动失败：`No usable sandbox` 或 `Running as root without --no-sandbox`
 
-以非 root 用户运行容器（Dockerfile 中已配置 `USER chrome`），或者加 `-no-sandbox` 参数。
+当前 Dockerfile 的 ENTRYPOINT 已默认带 `-no-sandbox`。如果你自定义了启动命令，确保加上 `-no-sandbox` 参数。
 
 ### PDF 中文显示为方块
 
