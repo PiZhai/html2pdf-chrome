@@ -17,6 +17,13 @@ type PageOptions struct {
 	Timeout         time.Duration
 }
 
+// OpenPage navigates to the target URL and executes the wait strategy chain:
+//  1. body ready
+//  2. document.readyState === "complete"
+//  3. document.fonts.status === "loaded"
+//  4. Network idle (optional)
+//  5. CSS selector visible (optional)
+//  6. Custom JS expression truthy (optional)
 func OpenPage(ctx context.Context, opts PageOptions) error {
 	actions := []chromedp.Action{
 		chromedp.Navigate(opts.TargetURL),

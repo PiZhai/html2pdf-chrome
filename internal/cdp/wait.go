@@ -6,6 +6,8 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+// WaitDocumentReady polls until document.readyState === "complete", indicating
+// that the page and all sub-resources (images, stylesheets) have finished loading.
 func WaitDocumentReady(timeout time.Duration) chromedp.Action {
 	var ready bool
 
@@ -17,6 +19,8 @@ func WaitDocumentReady(timeout time.Duration) chromedp.Action {
 	)
 }
 
+// WaitFontsReady polls until all web fonts have finished loading.
+// Falls back to true if the document.fonts API is not available.
 func WaitFontsReady(timeout time.Duration) chromedp.Action {
 	var ready bool
 

@@ -14,13 +14,22 @@ import (
 	"time"
 )
 
+// LaunchOptions configures Chrome process startup behavior.
 type LaunchOptions struct {
-	DebugLog  bool
+	// DebugLog enables Chrome stderr output to os.Stderr for debugging.
+	DebugLog bool
+
+	// NoSandbox disables Chrome's sandbox via --no-sandbox flag.
+	// Required when running as root in Docker containers.
 	NoSandbox bool
 }
 
+// Launch starts a new headless Chrome process with an isolated user-data-dir
+// and a random debugging port. It waits up to 5 seconds for the WebSocket
+// debugging endpoint to become available.
 func Launch(execPath string, options LaunchOptions) (*Instance, error) {
-	// 为每次启动创建独立 profile，避免缓存、cookie、localStorage 污染任务。
+	// Each launch uses a fresh profile directory to avoid state pollution
+	// (cookies, localStorage, cache) between tasks.
 	userDataDir, err := os.MkdirTemp("", "html2pdf-chrome-profile-*")
 	if err != nil {
 		return nil, fmt.Errorf("create user data dir: %w", err)
@@ -98,6 +107,7 @@ func Launch(execPath string, options LaunchOptions) (*Instance, error) {
 	return instance, nil
 }
 
+// Close terminates the Chrome process and removes its temporary user-data-dir.
 func (i *Instance) Close() error {
 	if i == nil {
 		return nil
@@ -117,9 +127,9 @@ func (i *Instance) Close() error {
 	return nil
 }
 
-// pickFreePort() 有竞态窗口
-// 这是正常的第一版实现。
-// 意思是：你拿到端口后关闭 listener，到 Chrome 真正绑定前，理论上可能被别的进程抢走。第一版可以接受，后面如果真要增强稳定性，再考虑更稳的做法。
+// pickFreePort finds an available TCP port on localhost. There is a small race
+// window between releasing the port and Chrome binding to it, which is
+// acceptable for this use case.
 func pickFreePort() (int, error) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -139,6 +149,8 @@ type versionInfo struct {
 	WebSocketDebuggerURL string `json:"webSocketDebuggerUrl"`
 }
 
+// waitForWebSocketURL polls Chrome's /json/version endpoint until the
+// WebSocket debugger URL is available, with a 5-second deadline.
 func waitForWebSocketURL(debugPort int) (string, error) {
 	endpoint := "http://127.0.0.1:" + strconv.Itoa(debugPort) + "/json/version"
 	deadline := time.Now().Add(5 * time.Second)

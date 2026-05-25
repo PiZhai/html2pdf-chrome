@@ -1,3 +1,5 @@
+// Package browser handles Chrome/Chromium process discovery, launching, and
+// lifecycle management. It supports macOS, Linux, and Windows path conventions.
 package browser
 
 import (
@@ -9,7 +11,11 @@ import (
 	"runtime"
 )
 
-// 只是编排查找顺序
+// FindChrome locates a Chrome/Chromium executable using the following priority:
+//  1. Explicit path provided by the caller
+//  2. CHROME_PATH environment variable
+//  3. Platform-specific well-known installation paths
+//  4. PATH lookup for common binary names
 func FindChrome(explicitPath string) (string, error) {
 
 	if explicitPath != "" {
@@ -38,8 +44,9 @@ func FindChrome(explicitPath string) (string, error) {
 	return "", errors.New("unable to find Chrome/Chromium executable; use -chrome-path or CHROME_PATH")
 }
 
+// validateExecutable checks that the given path exists, is not a directory,
+// and returns its absolute path.
 func validateExecutable(path string) (string, error) {
-	// 检查这个路径在文件系统里是否存在，并拿到它的文件信息。
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", fmt.Errorf("browser executable %q: %w", path, err)
@@ -57,7 +64,7 @@ func validateExecutable(path string) (string, error) {
 	return absPath, nil
 }
 
-// 负责平台差异
+// defaultExecutableCandidates returns platform-specific well-known Chrome paths.
 func defaultExecutableCandidates() []string {
 	switch runtime.GOOS {
 	case "darwin":
@@ -78,7 +85,7 @@ func defaultExecutableCandidates() []string {
 	}
 }
 
-// 负责 PATH 搜索名
+// binaryNames returns common Chrome/Chromium binary names for PATH lookup.
 func binaryNames() []string {
 	switch runtime.GOOS {
 	case "windows":
@@ -88,6 +95,7 @@ func binaryNames() []string {
 	}
 }
 
+// windowsCandidates builds Chrome candidate paths from Windows environment variables.
 func windowsCandidates() []string {
 	roots := []string{
 		os.Getenv("ProgramFiles"),

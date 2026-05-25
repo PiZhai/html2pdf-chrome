@@ -1,3 +1,4 @@
+// Package render handles PDF generation via Chrome's Page.printToPDF command.
 package render
 
 import (
@@ -14,8 +15,11 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+// defaultMarginInches is approximately 1cm, used when no margin is specified.
 const defaultMarginInches = 0.3937007874
 
+// PrintToFile calls Page.printToPDF with the given options and writes the
+// resulting PDF to the specified output file.
 func PrintToFile(ctx context.Context, options Options) error {
 	var pdfBytes []byte
 
@@ -53,6 +57,8 @@ func PrintToFile(ctx context.Context, options Options) error {
 	return nil
 }
 
+// buildPrintToPDFParams constructs the Chrome Page.printToPDF parameters from
+// the given options, applying defaults for unset margins.
 func buildPrintToPDFParams(options Options) (*page.PrintToPDFParams, error) {
 	params := page.PrintToPDF().
 		WithPaperWidth(options.PaperWidth).
@@ -106,6 +112,8 @@ func buildPrintToPDFParams(options Options) (*page.PrintToPDFParams, error) {
 	return params, nil
 }
 
+// readPDFStream reads a PDF from a Chrome IO stream handle, reassembling
+// chunks and decoding base64 if needed.
 func readPDFStream(ctx context.Context, handle cdpio.StreamHandle) ([]byte, error) {
 	defer func() {
 		_ = cdpio.Close(handle).Do(ctx)

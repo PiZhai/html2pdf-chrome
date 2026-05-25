@@ -8,6 +8,9 @@ import (
 	"github.com/PiZhai/html2pdf-chrome/internal/config"
 )
 
+// Convert performs a single HTML-to-PDF conversion. Each call launches a new
+// Chrome instance and closes it after completion. For high-throughput scenarios,
+// use NewConverter instead to reuse Chrome instances across conversions.
 func Convert(req Request) error {
 	cfg, err := req.toConfig()
 	if err != nil {
@@ -17,6 +20,8 @@ func Convert(req Request) error {
 	return app.Run(cfg)
 }
 
+// toConfig converts a public Request into an internal config.Config,
+// applying defaults and validating all fields.
 func (r Request) toConfig() (*config.Config, error) {
 	cfg := &config.Config{
 		URL:                     strings.TrimSpace(r.URL),

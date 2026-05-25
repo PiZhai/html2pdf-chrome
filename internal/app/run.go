@@ -1,3 +1,5 @@
+// Package app provides the orchestration layer that coordinates browser
+// lifecycle, CDP connection, page navigation, and PDF rendering.
 package app
 
 import (
@@ -9,6 +11,9 @@ import (
 	"github.com/PiZhai/html2pdf-chrome/internal/render"
 )
 
+// Run executes a single conversion by launching a new Chrome instance,
+// navigating to the target page, waiting for readiness, and exporting PDF.
+// The Chrome instance is closed after completion.
 func Run(cfg *config.Config) error {
 	if err := cfg.Validate(); err != nil {
 		return err
