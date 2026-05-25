@@ -74,19 +74,39 @@ func main() {
 		tmpFile := filepath.Join(outputDir, fmt.Sprintf("pdf-%d-%d.pdf", id, start.UnixMilli()))
 
 		opts := html2pdf.Options{
-			Timeout:         parseDurationOrDefault(req.Timeout, 45*time.Second),
-			PrintBackground: req.PrintBackground,
-			WaitNetworkIdle: req.WaitNetworkIdle,
-			WaitExpression:  req.WaitExpression,
-			WaitSelector:    req.WaitSelector,
-			NoSandbox:       noSandbox,
+			Timeout:                 parseDurationOrDefault(req.Timeout, 45*time.Second),
+			PrintBackground:         req.PrintBackground,
+			WaitNetworkIdle:         req.WaitNetworkIdle,
+			WaitExpression:          req.WaitExpression,
+			WaitSelector:            req.WaitSelector,
+			NoSandbox:               noSandbox,
+			Landscape:               req.Landscape,
+			DisplayHeaderFooter:     req.DisplayHeaderFooter,
+			HeaderTemplate:          req.HeaderTemplate,
+			FooterTemplate:          req.FooterTemplate,
+			PreferCSSPageSize:       req.PreferCSSPageSize,
+			GenerateTaggedPDF:       req.GenerateTaggedPDF,
+			GenerateDocumentOutline: req.GenerateDocumentOutline,
+			PageRanges:              req.PageRanges,
 		}
 
 		if req.Paper != "" {
 			opts.Paper = html2pdf.PaperPreset(req.Paper)
 		}
-		if req.Landscape {
-			opts.Landscape = true
+		if req.Scale != nil {
+			opts.Scale = req.Scale
+		}
+		if req.MarginTop != nil {
+			opts.MarginTop = req.MarginTop
+		}
+		if req.MarginBottom != nil {
+			opts.MarginBottom = req.MarginBottom
+		}
+		if req.MarginLeft != nil {
+			opts.MarginLeft = req.MarginLeft
+		}
+		if req.MarginRight != nil {
+			opts.MarginRight = req.MarginRight
 		}
 
 		var convertReq html2pdf.Request
@@ -168,7 +188,7 @@ type ConvertRequest struct {
 	// Raw HTML content to render. Mutually exclusive with URL.
 	HTML string `json:"html,omitempty"`
 
-	// Paper preset: a4, letter, legal, etc.
+	// Paper preset: a4, a3, a5, letter, legal, tabloid.
 	Paper string `json:"paper,omitempty"`
 
 	// Landscape orientation.
@@ -176,6 +196,36 @@ type ConvertRequest struct {
 
 	// Print CSS backgrounds.
 	PrintBackground bool `json:"printBackground,omitempty"`
+
+	// Display header and footer.
+	DisplayHeaderFooter bool `json:"displayHeaderFooter,omitempty"`
+
+	// HTML template for header (requires displayHeaderFooter=true).
+	HeaderTemplate string `json:"headerTemplate,omitempty"`
+
+	// HTML template for footer (requires displayHeaderFooter=true).
+	FooterTemplate string `json:"footerTemplate,omitempty"`
+
+	// Scale of the webpage rendering (0.1 to 2.0).
+	Scale *float64 `json:"scale,omitempty"`
+
+	// Margins in inches. Nil means use default (0.3937 inches ≈ 1cm).
+	MarginTop    *float64 `json:"marginTop,omitempty"`
+	MarginBottom *float64 `json:"marginBottom,omitempty"`
+	MarginLeft   *float64 `json:"marginLeft,omitempty"`
+	MarginRight  *float64 `json:"marginRight,omitempty"`
+
+	// Page ranges to print, e.g. "1-3, 5".
+	PageRanges string `json:"pageRanges,omitempty"`
+
+	// Prefer CSS @page size over paper setting.
+	PreferCSSPageSize bool `json:"preferCSSPageSize,omitempty"`
+
+	// Generate tagged (accessible) PDF.
+	GenerateTaggedPDF bool `json:"generateTaggedPDF,omitempty"`
+
+	// Generate document outline/bookmarks.
+	GenerateDocumentOutline bool `json:"generateDocumentOutline,omitempty"`
 
 	// Wait for network idle before export.
 	WaitNetworkIdle bool `json:"waitNetworkIdle,omitempty"`
