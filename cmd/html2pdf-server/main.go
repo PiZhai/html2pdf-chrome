@@ -21,6 +21,7 @@ func main() {
 
 	var (
 		addr         string
+		chromePath   string
 		maxInstances int
 		minInstances int
 		noSandbox    bool
@@ -28,6 +29,7 @@ func main() {
 	)
 
 	flag.StringVar(&addr, "addr", ":8080", "HTTP listen address")
+	flag.StringVar(&chromePath, "chrome-path", "", "Chrome/Chromium executable path (empty = auto-detect)")
 	flag.IntVar(&maxInstances, "max-instances", 4, "Max Chrome instances in pool")
 	flag.IntVar(&minInstances, "min-instances", 2, "Min idle Chrome instances")
 	flag.BoolVar(&noSandbox, "no-sandbox", false, "Disable Chrome sandbox (required in containers)")
@@ -39,6 +41,7 @@ func main() {
 	}
 
 	converter, err := html2pdf.NewConverter(html2pdf.ConverterConfig{
+		ChromePath:   chromePath,
 		MaxInstances: maxInstances,
 		MinInstances: minInstances,
 		NoSandbox:    noSandbox,
