@@ -182,6 +182,7 @@ docker run -d \
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-addr` | `:8080` | 监听地址 |
+| `-chrome-path` | 自动查找 | Chrome/Chromium 可执行文件路径 |
 | `-max-instances` | `4` | 最大 Chrome 实例数 |
 | `-min-instances` | `2` | 最小空闲实例数 |
 | `-no-sandbox` | ENTRYPOINT 已带 | 禁用 sandbox |

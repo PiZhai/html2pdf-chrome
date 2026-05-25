@@ -149,6 +149,12 @@ html2pdf-chrome -help
 # 直接运行
 html2pdf-server -addr :8080 -max-instances 4 -min-instances 2 -no-sandbox
 
+# 指定 Chrome 路径
+html2pdf-server -chrome-path /usr/bin/chromium -no-sandbox -addr :8080
+
+# 也可以用环境变量
+CHROME_PATH=/usr/bin/chromium html2pdf-server -no-sandbox -addr :8080
+
 # Docker 运行
 docker run -d \
   --name html2pdf \
@@ -163,6 +169,7 @@ docker run -d \
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-addr` | `:8080` | 监听地址 |
+| `-chrome-path` | 自动查找 | Chrome/Chromium 可执行文件路径 |
 | `-max-instances` | `4` | 最大 Chrome 实例数 |
 | `-min-instances` | `2` | 最小空闲实例数 |
 | `-no-sandbox` | `false` | 禁用 Chrome sandbox |
